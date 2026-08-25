@@ -1,3 +1,13 @@
+# docker-compose runs `rails db:seed` on every `docker compose up`, so bail out
+# unless the database is empty. Without this guard a restart destroys and
+# regenerates ~9,000 rows one INSERT at a time, and takes any data the developer
+# entered by hand with it.
+if Expense.exists?
+  puts "Database already seeded (#{Expense.count} expenses) - skipping."
+  puts "Run `rails db:seed:replant` to rebuild from scratch."
+  return
+end
+
 # Clear existing data
 puts "Clearing existing data..."
 Expense.destroy_all
