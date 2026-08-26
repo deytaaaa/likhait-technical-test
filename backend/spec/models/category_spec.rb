@@ -41,6 +41,24 @@ RSpec.describe Category, type: :model do
     end
   end
 
+  describe "deleting a category" do
+    it "refuses while expenses still reference it" do
+      category = create(:category)
+      create(:expense, category: category)
+
+      expect(category.destroy).to be(false)
+      expect(category.errors[:base]).to include(/Cannot delete record because dependent expenses exist/)
+      expect(Category.exists?(category.id)).to be(true)
+    end
+
+    it "succeeds once no expenses reference it" do
+      category = create(:category)
+
+      expect(category.destroy).to be_truthy
+      expect(Category.exists?(category.id)).to be(false)
+    end
+  end
+
   describe "normalization" do
     it "strips surrounding whitespace from the name" do
       category = create(:category, name: "  Groceries  ")

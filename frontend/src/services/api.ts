@@ -72,19 +72,37 @@ export async function createCategory(name: string): Promise<Category> {
 }
 
 /**
+ * Translate a form payload into the shape the API accepts.
+ *
+ * The form carries the category by name while `expense_params` on the server
+ * only permits `category_id`, so the name has to be resolved to an id here or
+ * Rails discards it as an unpermitted parameter.
+ */
+async function toExpensePayload(data: Partial<ExpenseFormData>) {
+  const payload: Record<string, unknown> = {
+    description: data.description,
+    amount: data.amount,
+    date: data.date,
+  };
+
+  if (data.category !== undefined) {
+    const categories = await fetchCategories();
+    payload.category_id = categories.find((c) => c.name === data.category)?.id;
+  }
+
+  // Drop keys the caller did not supply so a partial update stays partial.
+  Object.keys(payload).forEach((key) => {
+    if (payload[key] === undefined) delete payload[key];
+  });
+
+  return payload;
+}
+
+/**
  * Create a new expense
  */
 export async function createExpense(data: ExpenseFormData): Promise<Expense> {
-  // Convert category name to category_id
-  const categories = await fetchCategories();
-  const category = categories.find((c) => c.name === data.category);
-
-  const expenseData = {
-    description: data.description,
-    amount: data.amount,
-    category_id: category?.id,
-    date: data.date,
-  };
+  const expenseData = await toExpensePayload(data);
 
   const response = await fetch(`${API_BASE_URL}/expenses`, {
     method: "POST",
@@ -108,12 +126,14 @@ export async function updateExpense(
   id: number,
   data: Partial<ExpenseFormData>,
 ): Promise<Expense> {
+  const expenseData = await toExpensePayload(data);
+
   const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ expense: data }),
+    body: JSON.stringify({ expense: expenseData }),
   });
 
   if (!response.ok) {

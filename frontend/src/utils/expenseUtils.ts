@@ -29,6 +29,20 @@ export function formatDate(date: Date): string {
 }
 
 /**
+ * Parse a YYYY-MM-DD string as a local calendar date.
+ *
+ * `new Date("2026-08-25")` is specified to parse as UTC midnight, but
+ * getFullYear/getMonth/getDate then read it back in the viewer's local zone.
+ * Anywhere behind UTC that lands on the previous day, so an expense dated the
+ * 1st renders as the last day of the previous month. Constructing from the
+ * parts keeps the calendar date the user entered.
+ */
+export function parseLocalDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/**
  * Get days in month
  */
 export function getDaysInMonth(year: number, month: number): number {
@@ -42,7 +56,7 @@ export function groupExpensesByDay(expenses: Expense[]) {
   const grouped = new Map<number, Expense[]>();
 
   expenses.forEach((expense) => {
-    const day = new Date(expense.date).getDate();
+    const day = parseLocalDate(expense.date).getDate();
     const dayExpenses = grouped.get(day) || [];
     dayExpenses.push(expense);
     grouped.set(day, dayExpenses);
