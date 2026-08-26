@@ -4,9 +4,9 @@
 
 import React from "react";
 import { ExpenseFormData } from "../types";
-import { EXPENSE_CATEGORIES } from "../constants/categories";
 import { TextField, SelectBox, Button } from "../vibes";
 import { useExpenseForm } from "../hooks/useExpenseForm";
+import { useCategories } from "../contexts/CategoriesContext";
 
 interface ExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
@@ -26,6 +26,7 @@ export function ExpenseForm({
       initialData,
       onSubmit,
     });
+  const { categories, loading: categoriesLoading } = useCategories();
 
   const formStyle: React.CSSProperties = {
     display: "flex",
@@ -39,9 +40,11 @@ export function ExpenseForm({
     marginTop: "0.5rem",
   };
 
-  const categoryOptions = EXPENSE_CATEGORIES.map((category) => ({
-    value: category,
-    label: category,
+  // Sourced from /api/categories rather than a hardcoded list, so categories
+  // added through the Add Category modal are immediately selectable here.
+  const categoryOptions = categories.map((category) => ({
+    value: category.name,
+    label: category.name,
   }));
 
   return (
@@ -75,6 +78,7 @@ export function ExpenseForm({
         value={formData.category}
         onChange={(e) => handleChange("category", e.target.value)}
         error={errors.category}
+        disabled={categoriesLoading}
         fullWidth
         required
       />
