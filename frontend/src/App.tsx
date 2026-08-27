@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import HistoryPage from "./pages/HistoryPage";
+import { CategoriesProvider } from "./contexts/CategoriesContext";
 import { COLORS } from "./constants/colors";
 
 function App() {
@@ -24,17 +25,19 @@ function App() {
   };
 
   return (
-    <div style={appStyle}>
-      <Sidebar
-        currentPage={currentPage}
-        onNavigate={setCurrentPage}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={handleToggleSidebar}
-      />
-      <main style={mainStyle}>
-        {currentPage === "history" && <HistoryPage />}
-      </main>
-    </div>
+    <CategoriesProvider>
+      <div style={appStyle}>
+        <Sidebar
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={handleToggleSidebar}
+        />
+        <main style={mainStyle}>
+          {currentPage === "history" && <HistoryPage />}
+        </main>
+      </div>
+    </CategoriesProvider>
   );
 }
 
