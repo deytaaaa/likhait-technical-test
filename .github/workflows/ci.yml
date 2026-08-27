@@ -25,8 +25,12 @@ jobs:
           bundler-cache: true
           working-directory: backend
 
+      # `bundle exec brakeman`, not `bin/brakeman`. The generated binstub does
+      # `ARGV.unshift("--ensure-latest")`, so it exits 5 whenever a newer
+      # brakeman has been released - failing CI on an upstream release rather
+      # than on anything in this repository.
       - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
+        run: bundle exec brakeman --no-pager
 
   lint:
     name: RuboCop
@@ -60,9 +64,6 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y default-mysql-client libjemalloc2
-
       - name: Checkout code
         uses: actions/checkout@v4
 
