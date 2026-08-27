@@ -30,7 +30,7 @@ jobs:
       # brakeman has been released - failing CI on an upstream release rather
       # than on anything in this repository.
       - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bundle exec brakeman --no-pager
+        run: bundle exec brakeman --no-pager -i config/brakeman.ignore
 
   lint:
     name: RuboCop

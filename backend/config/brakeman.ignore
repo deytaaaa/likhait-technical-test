@@ -1,0 +1,15 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Unmaintained Dependency",
+      "warning_code": 121,
+      "fingerprint": "d84924377155b41e094acae7404ec2e521629d86f97b0ff628e3d1b263f8101c",
+      "check_name": "EOLRails",
+      "message": "Support for Rails 7.2.3 ended on 2026-08-09",
+      "file": "Gemfile.lock",
+      "line": 176,
+      "note": "Accepted, not dismissed. Rails 7.2 reached end of life on 2026-08-09, so the framework stops receiving security patches. Upgrading to 8.x is a real piece of work with its own risk and does not belong inside a bug-fix or feature branch, so it is tracked as a recommendation in CRITIQUE.md instead. This ignore is pinned to the fingerprint for 7.2.3 specifically: bump Rails and the warning returns, which is the intent."
+    }
+  ],
+  "brakeman_version": "7.1.1"
+}
