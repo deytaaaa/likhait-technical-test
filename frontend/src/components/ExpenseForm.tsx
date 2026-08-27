@@ -5,7 +5,8 @@
 import React from "react";
 import { ExpenseFormData } from "../types";
 import { TextField, SelectBox, Button } from "../vibes";
-import { useExpenseForm } from "../hooks/useExpenseForm";
+import { COLORS } from "../constants/colors";
+import { useExpenseForm, today } from "../hooks/useExpenseForm";
 import { useCategories } from "../contexts/CategoriesContext";
 
 interface ExpenseFormProps {
@@ -21,11 +22,17 @@ export function ExpenseForm({
   onCancel,
   submitLabel = "Add Expense",
 }: ExpenseFormProps) {
-  const { formData, errors, isSubmitting, handleChange, handleSubmit } =
-    useExpenseForm({
-      initialData,
-      onSubmit,
-    });
+  const {
+    formData,
+    errors,
+    submitError,
+    isSubmitting,
+    handleChange,
+    handleSubmit,
+  } = useExpenseForm({
+    initialData,
+    onSubmit,
+  });
   const { categories, loading: categoriesLoading } = useCategories();
 
   const formStyle: React.CSSProperties = {
@@ -38,6 +45,15 @@ export function ExpenseForm({
     display: "flex",
     gap: "0.5rem",
     marginTop: "0.5rem",
+  };
+
+  const submitErrorStyle: React.CSSProperties = {
+    fontSize: "0.875rem",
+    color: COLORS.danger,
+    backgroundColor: COLORS.background.card,
+    border: `1px solid ${COLORS.danger}`,
+    borderRadius: "0.375rem",
+    padding: "0.5rem 0.75rem",
   };
 
   // Sourced from /api/categories rather than a hardcoded list, so categories
@@ -83,15 +99,25 @@ export function ExpenseForm({
         required
       />
 
+      {/* `max` stops the picker offering future days; useExpenseForm repeats
+          the check because the attribute does not stop a typed-in date, and
+          the model enforces it again server-side. */}
       <TextField
         label="Date"
         type="date"
         value={formData.date}
+        max={today()}
         onChange={(e) => handleChange("date", e.target.value)}
         error={errors.date}
         fullWidth
         required
       />
+
+      {submitError && (
+        <div style={submitErrorStyle} role="alert">
+          {submitError}
+        </div>
+      )}
 
       <div style={buttonGroupStyle}>
         <Button
