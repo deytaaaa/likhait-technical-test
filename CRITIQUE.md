@@ -92,6 +92,28 @@ Rack now warns on every use: "Status code :unprocessable_entity is deprecated
 ... Please use :unprocessable_content instead." Left consistent with the
 existing controller rather than half-migrated; worth one sweep.
 
+### Rails 7.2 is past end of life
+
+Brakeman flags it, with high confidence:
+
+```
+Confidence: High
+Category: Unmaintained Dependency
+Check: EOLRails
+Message: Support for Rails 7.2.3 ended on 2026-08-09
+```
+
+The framework no longer receives security patches. This is the most serious
+item in this document, and it is also the one least suited to being fixed
+inside a feature branch - a 7.2 to 8.x upgrade is a project with its own
+testing and rollback plan, not a line in a bug fix.
+
+CI carries a pinned ignore for it in `backend/config/brakeman.ignore` with the
+reasoning written into the `note` field, so the build is not permanently red
+over a known and accepted condition. The ignore is keyed to the fingerprint for
+7.2.3 specifically: bump Rails and the warning comes back, which is the point.
+Any other Brakeman warning still fails the build.
+
 ### No frontend test tooling
 
 `package.json` has no `test` script and no test dependencies, so every frontend
