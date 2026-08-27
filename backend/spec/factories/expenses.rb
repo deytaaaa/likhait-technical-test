@@ -1,8 +1,8 @@
 FactoryBot.define do
   factory :expense do
-    description { "MyString" }
+    description { "Team lunch" }
     amount { "9.99" }
-    category { nil }
-    payer_name { "MyString" }
+    date { Date.current }
+    association :category
   end
 end

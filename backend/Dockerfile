@@ -8,16 +8,20 @@ FROM ruby:$RUBY_VERSION-slim
 WORKDIR /rails
 
 # Install base packages
+# libyaml-dev and pkg-config are required to build psych, a transitive
+# dependency of the debug gem; the slim image does not ship them.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential ca-certificates default-mysql-client default-libmysqlclient-dev git && \
+    apt-get install --no-install-recommends -y build-essential ca-certificates default-mysql-client default-libmysqlclient-dev git libyaml-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
 
-# Configure bundler and install gems with retry logic
+# Gems install into the image default (/usr/local/bundle), which docker-compose
+# backs with the `backend_gems` volume. Installing into ./vendor/bundle instead
+# put them under the `./backend:/rails` bind mount, where the host directory
+# shadowed them on every run.
 RUN bundle config set --local deployment 'false' && \
-    bundle config set --local path 'vendor/bundle' && \
     bundle install --jobs 4 --retry 3
 
 # Copy application code

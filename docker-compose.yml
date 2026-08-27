@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   db:
     image: mysql:8.0
@@ -52,11 +50,15 @@ services:
     volumes:
       - ./backend:/rails
       - backend_gems:/usr/local/bundle
+    # tmp/ lives on the ./backend bind mount, so server.pid survives the
+    # container. Without the rm, every restart after the first aborts with
+    # "A server is already running".
     command: >
       sh -c "
         bundle install &&
         rails db:migrate &&
         rails db:seed &&
+        rm -f tmp/pids/server.pid &&
         rails server -b 0.0.0.0
       "
     networks:

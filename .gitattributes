@@ -1,0 +1,15 @@
+# Force LF in the working tree regardless of the contributor's core.autocrlf.
+#
+# The backend runs in a Linux container with ./backend bind-mounted from the
+# host, so a Windows checkout would hand the container CRLF scripts. That makes
+# `#!/bin/bash -e` parse as the option `-e\r` and every bin/ script dies with
+# "/bin/bash: -: invalid option".
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
