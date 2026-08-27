@@ -5,8 +5,8 @@ RSpec.describe "Api::Expenses", type: :request do
   let!(:transport_category) { Category.create!(name: "Transport") }
 
   describe "GET /api/expenses" do
-  let!(:expense1) { Expense.create!(description: "Lunch", amount: 100.00, category: food_category, date: Date.today) }
-  let!(:expense2) { Expense.create!(description: "Taxi", amount: 50.00, category: transport_category, date: Date.today) }
+    let!(:expense1) { Expense.create!(description: "Lunch", amount: 100.00, category: food_category, date: Date.current) }
+    let!(:expense2) { Expense.create!(description: "Taxi", amount: 50.00, category: transport_category, date: Date.current) }
 
     it "returns all expenses with category information" do
       get "/api/expenses"
@@ -14,14 +14,74 @@ RSpec.describe "Api::Expenses", type: :request do
       expect(response).to have_http_status(:success)
       json = JSON.parse(response.body)
       expect(json.length).to eq(2)
+      expect(json.map { |e| e["category"] }).to contain_exactly("Food", "Transport")
     end
 
-    it "returns expenses in descending order by created_at" do
+    it "returns expenses in descending order by expense date" do
+      # created_at ascends while date descends, so a list ordered by
+      # created_at would come back in exactly the opposite order.
+      older = Expense.create!(description: "Old", amount: 10.00, category: food_category,
+                              date: Date.current - 10, created_at: 1.minute.ago)
+      newer = Expense.create!(description: "New", amount: 20.00, category: food_category,
+                              date: Date.current - 2, created_at: Time.current)
+
       get "/api/expenses"
 
       json = JSON.parse(response.body)
-      expect(json.first["id"]).to eq(expense2.id)
-      expect(json.last["id"]).to eq(expense1.id)
+      ids = json.map { |e| e["id"] }
+      expect(ids.index(newer.id)).to be < ids.index(older.id)
+      expect(json.map { |e| e["date"] }).to eq(json.map { |e| e["date"] }.sort.reverse)
+    end
+
+    it "puts a newly created expense at the top when it has the latest date" do
+      newest = Expense.create!(description: "Coffee", amount: 5.00, category: food_category,
+                               date: Date.current)
+
+      get "/api/expenses"
+
+      expect(JSON.parse(response.body).first["id"]).to eq(newest.id)
+    end
+
+    it "orders expenses sharing a date by most recently created" do
+      first = Expense.create!(description: "First", amount: 10.00, category: food_category,
+                              date: Date.current, created_at: 2.hours.ago)
+      second = Expense.create!(description: "Second", amount: 20.00, category: food_category,
+                               date: Date.current, created_at: 1.hour.ago)
+
+      get "/api/expenses"
+
+      ids = JSON.parse(response.body).map { |e| e["id"] }
+      expect(ids.index(second.id)).to be < ids.index(first.id)
+    end
+
+    context "when filtering by year and month" do
+      it "selects on the expense date rather than the creation timestamp" do
+        # Entered today, but the money was spent last month: it belongs to
+        # last month's view and must not leak into this month's.
+        backdated = Expense.create!(description: "Backdated", amount: 30.00, category: food_category,
+                                    date: Date.current.prev_month.beginning_of_month,
+                                    created_at: Time.current)
+
+        get "/api/expenses", params: { year: backdated.date.year, month: backdated.date.month }
+
+        expect(JSON.parse(response.body).map { |e| e["id"] }).to include(backdated.id)
+
+        get "/api/expenses", params: { year: Date.current.year, month: Date.current.month }
+
+        expect(JSON.parse(response.body).map { |e| e["id"] }).not_to include(backdated.id)
+      end
+
+      it "includes expenses dated on the first and last day of the month" do
+        first_day = Expense.create!(description: "First day", amount: 10.00, category: food_category,
+                                    date: Date.new(2025, 6, 1))
+        last_day = Expense.create!(description: "Last day", amount: 20.00, category: food_category,
+                                   date: Date.new(2025, 6, 30))
+
+        get "/api/expenses", params: { year: 2025, month: 6 }
+
+        ids = JSON.parse(response.body).map { |e| e["id"] }
+        expect(ids).to contain_exactly(last_day.id, first_day.id)
+      end
     end
   end
 
